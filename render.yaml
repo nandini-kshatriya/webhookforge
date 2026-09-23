@@ -1,0 +1,16 @@
+services:
+  - type: web
+    name: webhookforge-api
+    runtime: docker
+    plan: free
+    dockerfilePath: ./Dockerfile
+    healthCheckPath: /api/health
+    envVars:
+      - key: DATABASE_URL      # set to your Neon connection string
+        sync: false
+      - key: REDIS_URL          # set to your Upstash rediss:// URL
+        sync: false
+      - key: API_KEY              # set your own shared secret
+        sync: false
+      - key: ENV
+        value: production

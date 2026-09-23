@@ -1,0 +1,60 @@
+version: "3.9"
+
+services:
+  postgres:
+    image: postgres:16
+    container_name: webhookforge-postgres
+    environment:
+      POSTGRES_USER: webhookforge
+      POSTGRES_PASSWORD: webhookforge
+      POSTGRES_DB: webhookforge
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U webhookforge"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7
+    container_name: webhookforge-redis
+    ports:
+      - "6379:6379"
+
+  # Local dev: API and worker run as SEPARATE containers (easier to read logs,
+  # matches how you'd run this in a "real" production deployment).
+  # In the free-tier deployed version (Dockerfile CMD -> start.sh) they run
+  # together in one process, because Render's free tier has no worker dyno.
+  api:
+    build: .
+    container_name: webhookforge-api
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+    volumes:
+      - .:/app
+    ports:
+      - "8000:8000"
+    env_file: .env
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_started
+
+  worker:
+    build: .
+    container_name: webhookforge-worker
+    command: celery -A app.workers.celery_app worker --loglevel=info
+    volumes:
+      - .:/app
+    env_file: .env
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_started
+
+volumes:
+  pgdata:

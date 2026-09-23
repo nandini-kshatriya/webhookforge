@@ -1,40 +1,51 @@
-# WebhookForge — Phase 0 & 1 Scaffold
+# WebhookForge
 
-This is the working scaffold for Phases 0-1 of the build plan (see webhookforge-plan.md).
+WebhookForge is a reliable webhook delivery platform that receives events from applications and delivers them to registered subscriber endpoints.
 
-## Run locally
+It handles asynchronous delivery, retries, idempotency, HMAC signing, and delivery tracking.
 
-1. Copy the env file:
-   cp .env.example .env
+## Features
 
-2. Start everything:
-   docker compose up --build
+- Subscriber management
+- Event publishing
+- Asynchronous webhook delivery
+- Retry with exponential backoff and jitter
+- HMAC webhook signing
+- Idempotency support
+- Delivery and attempt history
+- Manual redelivery
+- Delivery statistics
+- PostgreSQL for persistence
+- Redis + Celery for background processing
+- FastAPI REST API
+- Docker-based development
 
-3. Run the initial migration (first time only, in a new terminal):
-   docker compose exec api alembic upgrade head
+## Tech Stack
 
-4. Try it out:
-   curl http://localhost:8000/api/health
+- **Backend:** FastAPI, Python
+- **Database:** PostgreSQL
+- **Queue:** Redis + Celery
+- **ORM:** SQLAlchemy
+- **Migrations:** Alembic
+- **Testing:** Pytest
+- **Containerization:** Docker & Docker Compose
 
-   curl -X POST http://localhost:8000/api/subscribers \
-     -H "Content-Type: application/json" \
-     -d '{"name":"Test Sub","target_url":"https://example.com/hook","subscribed_events":["order.created"]}'
+## Architecture
 
-   curl -X POST http://localhost:8000/api/events \
-     -H "Content-Type: application/json" \
-     -d '{"event_type":"order.created","payload":{"order_id":123},"idempotency_key":"evt-1"}'
-
-5. Interactive API docs: http://localhost:8000/docs
-
-## What's implemented
-- Subscriber CRUD (create/list/get/update/delete)
-- Event publishing with idempotency-key deduplication
-- Postgres schema via Alembic (subscribers, events, deliveries, delivery_attempts)
-- Celery app configured (no tasks registered yet — that's Phase 2)
-
-## What's next (Phase 2)
-- app/delivery/signer.py    -- HMAC-SHA256 payload signing
-- app/delivery/sender.py    -- HTTP POST to subscriber with timeout
-- app/delivery/dispatcher.py -- event -> matching subscribers -> create Delivery rows
-- app/workers/delivery_worker.py -- Celery task that sends + records attempts
-- app/delivery/backoff.py   -- exponential backoff + jitter, retry scheduling
+```text
+Application
+     |
+     v
+ FastAPI
+     |
+     v
+PostgreSQL
+     |
+     v
+Redis / Celery
+     |
+     v
+Webhook Worker
+     |
+     v
+Subscriber Endpoint

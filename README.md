@@ -148,13 +148,16 @@ pytest                 # backoff math, etc.
 
 ## Deployment
 
-Free-tier deployable end to end with no LLM/paid-API dependency anywhere: Neon (Postgres), Upstash (Redis), Render (backend — API + worker combined in one process via `start.sh`, since Render's free tier has no separate worker dyno), Vercel (frontend). See `render.yaml`, `Dockerfile`, and `start.sh`.
+Deployable end to end on free tiers with no card and no paid-API dependency: **Neon** (Postgres), **Render** (one free web service running the API *and* the Celery worker via a supervising `start.sh`, plus a free Key Value instance as the broker), **Vercel** (frontend). Step-by-step guide, smoke test, and honest free-tier caveats: [DEPLOYMENT.md](DEPLOYMENT.md). Infra is defined in `render.yaml`, `Dockerfile`, `start.sh` and `frontend/vercel.json`.
+
+Production behavior worth knowing: the app refuses to boot with `ENV=production` and the default API key; CORS is restricted to `ALLOWED_ORIGINS`; the worker polls Redis every 30 s instead of every 1 s (a blocked poll returns the instant a task arrives, measured at ~11 ms pickup, but idle Redis traffic drops from ~60 commands/min to ~3).
 
 ## What's deliberately out of scope
 
 This is a portfolio-scale project, and some simplifications are intentional rather than oversights:
-
-- One static API key, not per-client keys or OAuth — noted in `app/core/security.py`.
+- One static API key, not per-client keys or OAuth — noted in `app/core/security.py`. On the deployed demo it is compiled into the public frontend bundle, so treat write access as open.
+- No validation of subscriber target URLs (the server will POST to whatever is registered) — fine for a demo, the first thing to harden for real use.
+- No recovery sweeper: on the free tier the queue is in-memory, so a broker restart loses queued retries; those deliveries can be re-run with **Redeliver**.
 - No secret rotation endpoint yet — if a subscriber's signing secret is lost, there's no way to retrieve or regenerate it (matches how Stripe/GitHub show secrets exactly once, but a rotation endpoint would be a natural next addition).
 - Retry attempt numbering restarts at 1 after a manual "Redeliver" — past attempts stay in history, distinguishable by timestamp, but aren't renumbered into a single continuous sequence.
 

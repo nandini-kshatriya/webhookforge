@@ -185,4 +185,4 @@ This is a portfolio-scale project, and some simplifications are intentional rath
 
 ## License
 
-MIT
+This project is licensed under the [MIT License](LICENSE).

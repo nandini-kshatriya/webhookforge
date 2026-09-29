@@ -1,0 +1,14 @@
+# Keep the backend image small and free of secrets/dev clutter.
+.git
+.env
+.env.*
+!.env.example
+frontend
+**/node_modules
+**/__pycache__
+**/*.pyc
+.pytest_cache
+tests
+tools
+*.md
+docker-compose.yml

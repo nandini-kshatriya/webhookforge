@@ -1,17 +1,22 @@
+# secrets / local config
 .env
 .env.*
 !.env.example
 
+# python
 __pycache__/
-*.py[cod]
+*.pyc
 .pytest_cache/
-
 .venv/
 venv/
-env/
 
+# node / frontend build output
 node_modules/
-dist/
-build/
+frontend/dist/
+*.tsbuildinfo
 
-*.log
+# os / editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/

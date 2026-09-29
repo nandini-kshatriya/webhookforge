@@ -8,7 +8,11 @@ from app.db.session import Base
 from app.db import models  # noqa: F401  -- registers all models on Base.metadata
 
 config = context.config
-config.set_main_option("sqlalchemy.url", settings.DATABASE_URL)
+# configparser treats "%" as interpolation syntax, so a percent-encoded
+# character anywhere in the URL (very common in generated DB passwords,
+# e.g. "%40" for "@") would crash the migration -- and, under start.sh's
+# `set -e`, crash-loop the container. Escape it for the ini layer only.
+config.set_main_option("sqlalchemy.url", settings.DATABASE_URL.replace("%", "%%"))
 
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)

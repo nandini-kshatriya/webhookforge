@@ -3,14 +3,27 @@ services:
     name: webhookforge-api
     runtime: docker
     plan: free
+    region: oregon
     dockerfilePath: ./Dockerfile
     healthCheckPath: /api/health
     envVars:
-      - key: DATABASE_URL      # set to your Neon connection string
+      - key: DATABASE_URL
         sync: false
-      - key: REDIS_URL          # set to your Upstash rediss:// URL
-        sync: false
-      - key: API_KEY              # set your own shared secret
+      - key: REDIS_URL
+        fromService:
+          type: keyvalue
+          name: webhookforge-redis
+          property: connectionString
+      - key: API_KEY
         sync: false
       - key: ENV
         value: production
+      - key: ALLOWED_ORIGINS
+        sync: false
+
+  - type: keyvalue
+    name: webhookforge-redis
+    plan: free
+    region: oregon
+    ipAllowList: []
+    maxmemoryPolicy: noeviction
